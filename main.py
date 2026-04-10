@@ -14,11 +14,34 @@ from app.handlers import build_router
 from app.web import build_web_app
 
 
+logger = logging.getLogger(__name__)
+
+
+async def run_bot(dispatcher: Dispatcher, bot: Bot) -> None:
+    while True:
+        try:
+            logger.info("Starting Telegram polling")
+            await dispatcher.start_polling(bot)
+            return
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Telegram polling crashed. Retrying in 5 seconds.")
+            await asyncio.sleep(5)
+
+
 async def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
     settings = get_settings()
     init_db(settings.db_path)
+
+    logger.info(
+        "Starting web app on %s:%s with public URL %s",
+        settings.web_host,
+        settings.web_port,
+        settings.webapp_url,
+    )
 
     bot = Bot(
         token=settings.bot_token,
@@ -33,10 +56,14 @@ async def main() -> None:
     site = web.TCPSite(runner, host=settings.web_host, port=settings.web_port)
     await site.start()
 
+    bot_task = asyncio.create_task(run_bot(dispatcher, bot))
+
     try:
-        await dispatcher.start_polling(bot)
+        await bot_task
     finally:
+        bot_task.cancel()
         await runner.cleanup()
+        await bot.session.close()
 
 
 if __name__ == "__main__":
