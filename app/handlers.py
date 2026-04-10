@@ -10,7 +10,42 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from app import db
 from app.keyboards import main_menu, order_status_keyboard, service_types
 from app.states import OrderForm
-from app.text import STATUS_LABELS, format_order
+from app.text import STATUS_LABELS, format_order, parse_attachments
+
+
+def _build_order_payload(message: Message, data: dict, attachments: list[dict] | None = None) -> dict:
+    username = f"@{message.from_user.username}" if message.from_user.username else ""
+
+    return {
+        "telegram_user_id": message.from_user.id,
+        "telegram_username": message.from_user.username,
+        "customer_name": message.from_user.full_name,
+        "service_type": data["service_type"],
+        "target_content": data["target_content"],
+        "content_info": data["content_info"],
+        "game_nickname": data["game_nickname"],
+        "contact": username or str(message.from_user.id),
+        "deadline": data["deadline"],
+        "priority_factors": data["priority_factors"],
+        "details": data.get("details", ""),
+        "attachments": attachments or data.get("attachments", []),
+        "status": "new",
+    }
+
+
+async def _notify_admins(message: Message, settings, order: dict) -> None:
+    attachments = parse_attachments(order)
+
+    for admin_id in settings.admin_ids:
+        await message.bot.send_message(
+            admin_id,
+            format_order(order),
+            reply_markup=order_status_keyboard(order["id"]),
+        )
+        for attachment in attachments[:10]:
+            url = attachment.get("url")
+            if url:
+                await message.bot.send_photo(admin_id, photo=url)
 
 
 def build_router(settings) -> Router:
@@ -20,8 +55,8 @@ def build_router(settings) -> Router:
     async def start_handler(message: Message, state: FSMContext) -> None:
         await state.clear()
         await message.answer(
-            "Бот принимает заказы по Marvel Contest of Champions.\n"
-            "Открой мини-приложение для нормальной формы заказа или используй чат-режим.",
+            "Открой приложение и оформи заказ по контенту MCOC. "
+            "Если надо, можно заполнить форму и в чат-режиме.",
             reply_markup=main_menu(settings.webapp_url),
         )
 
@@ -29,113 +64,95 @@ def build_router(settings) -> Router:
     async def process_web_app_order(message: Message, state: FSMContext) -> None:
         await state.clear()
         data = json.loads(message.web_app_data.data)
-
-        order_id = db.create_order(
-            settings.db_path,
+        payload = _build_order_payload(
+            message,
             {
-                "telegram_user_id": message.from_user.id,
-                "telegram_username": message.from_user.username,
-                "customer_name": data["customer_name"],
                 "service_type": data["service_type"],
+                "target_content": data["target_content"],
+                "content_info": data["content_info"],
                 "game_nickname": data["game_nickname"],
-                "contact": data["contact"],
                 "deadline": data["deadline"],
-                "details": data["details"],
-                "status": "new",
+                "priority_factors": data["priority_factors"],
+                "details": data.get("details", ""),
+                "attachments": data.get("attachments", []),
             },
         )
+
+        order_id = db.create_order(settings.db_path, payload)
         order = db.get_order(settings.db_path, order_id)
 
         await message.answer(
-            f"Заказ #{order_id} принят через приложение. Администратор получил уведомление.",
+            f"Заказ #{order_id} отправлен. Скрины и условия переданы администратору.",
             reply_markup=main_menu(settings.webapp_url),
         )
-
-        for admin_id in settings.admin_ids:
-            await message.bot.send_message(
-                admin_id,
-                format_order(order),
-                reply_markup=order_status_keyboard(order_id),
-            )
+        await _notify_admins(message, settings, order)
 
     @router.message(F.text == "Создать заказ в чате")
     async def create_order_start(message: Message, state: FSMContext) -> None:
         await state.clear()
-        await state.set_state(OrderForm.customer_name)
-        await message.answer(
-            "Как к вам обращаться?",
-            reply_markup=ReplyKeyboardRemove(),
-        )
-
-    @router.message(OrderForm.customer_name)
-    async def process_customer_name(message: Message, state: FSMContext) -> None:
-        await state.update_data(customer_name=message.text.strip())
         await state.set_state(OrderForm.service_type)
         await message.answer(
-            "Выберите тип услуги:",
+            "Выберите тип заявки:",
             reply_markup=service_types(),
         )
 
     @router.message(OrderForm.service_type)
     async def process_service_type(message: Message, state: FSMContext) -> None:
         await state.update_data(service_type=message.text.strip())
-        await state.set_state(OrderForm.game_nickname)
+        await state.set_state(OrderForm.target_content)
         await message.answer(
-            "Введите игровой ник в Marvel Contest of Champions:",
+            "Что именно нужно пройти?",
             reply_markup=ReplyKeyboardRemove(),
         )
+
+    @router.message(OrderForm.target_content)
+    async def process_target_content(message: Message, state: FSMContext) -> None:
+        await state.update_data(target_content=message.text.strip())
+        await state.set_state(OrderForm.content_info)
+        await message.answer("Напиши информацию по контенту: акт, квест, путь, условия, ограничения.")
+
+    @router.message(OrderForm.content_info)
+    async def process_content_info(message: Message, state: FSMContext) -> None:
+        await state.update_data(content_info=message.text.strip())
+        await state.set_state(OrderForm.game_nickname)
+        await message.answer("Укажи игровой ник или ID аккаунта.")
 
     @router.message(OrderForm.game_nickname)
     async def process_game_nickname(message: Message, state: FSMContext) -> None:
         await state.update_data(game_nickname=message.text.strip())
-        await state.set_state(OrderForm.contact)
-        await message.answer("Оставьте контакт для связи: Telegram / Discord / WhatsApp и т.д.")
-
-    @router.message(OrderForm.contact)
-    async def process_contact(message: Message, state: FSMContext) -> None:
-        await state.update_data(contact=message.text.strip())
         await state.set_state(OrderForm.deadline)
-        await message.answer("Какой срок выполнения нужен?")
+        await message.answer("Когда это нужно сделать?")
 
     @router.message(OrderForm.deadline)
     async def process_deadline(message: Message, state: FSMContext) -> None:
         await state.update_data(deadline=message.text.strip())
+        await state.set_state(OrderForm.priority_factors)
+        await message.answer("Укажи важные факторы: лимиты, ревивы, бюджет, запреты, предпочтения.")
+
+    @router.message(OrderForm.priority_factors)
+    async def process_priority_factors(message: Message, state: FSMContext) -> None:
+        await state.update_data(priority_factors=message.text.strip())
         await state.set_state(OrderForm.details)
-        await message.answer("Опишите заказ подробнее: что именно нужно сделать?")
+        await message.answer(
+            "Если есть что-то еще важное, напиши. "
+            "Скрины персов после заявки можешь прислать отдельными сообщениями админу."
+        )
 
     @router.message(OrderForm.details)
     async def process_details(message: Message, state: FSMContext) -> None:
         await state.update_data(details=message.text.strip())
         data = await state.get_data()
+        payload = _build_order_payload(message, data)
 
-        order_id = db.create_order(
-            settings.db_path,
-            {
-                "telegram_user_id": message.from_user.id,
-                "telegram_username": message.from_user.username,
-                "customer_name": data["customer_name"],
-                "service_type": data["service_type"],
-                "game_nickname": data["game_nickname"],
-                "contact": data["contact"],
-                "deadline": data["deadline"],
-                "details": data["details"],
-                "status": "new",
-            },
-        )
+        order_id = db.create_order(settings.db_path, payload)
         order = db.get_order(settings.db_path, order_id)
         await state.clear()
 
         await message.answer(
-            f"Заказ #{order_id} принят. Администратор получил уведомление.",
+            f"Заказ #{order_id} принят. Если нужно, отдельно пришли скрины персов в чат администратору.",
             reply_markup=main_menu(settings.webapp_url),
         )
-
-        for admin_id in settings.admin_ids:
-            await message.bot.send_message(
-                admin_id,
-                format_order(order),
-                reply_markup=order_status_keyboard(order_id),
-            )
+        await _notify_admins(message, settings, order)
 
     @router.callback_query(F.data.startswith("order:"))
     async def process_order_status(callback: CallbackQuery) -> None:

@@ -27,7 +27,7 @@ async def main() -> None:
     dispatcher = Dispatcher()
     dispatcher.include_router(build_router(settings))
 
-    web_app = build_web_app()
+    web_app = build_web_app(settings)
     runner = web.AppRunner(web_app)
     await runner.setup()
     site = web.TCPSite(runner, host=settings.web_host, port=settings.web_port)

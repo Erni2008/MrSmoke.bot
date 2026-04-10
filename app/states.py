@@ -2,9 +2,10 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class OrderForm(StatesGroup):
-    customer_name = State()
     service_type = State()
+    target_content = State()
+    content_info = State()
     game_nickname = State()
-    contact = State()
     deadline = State()
+    priority_factors = State()
     details = State()

@@ -1,7 +1,17 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import closing
+
+
+def _ensure_column(connection: sqlite3.Connection, column: str, definition: str) -> None:
+    existing_columns = {
+        row[1]
+        for row in connection.execute("PRAGMA table_info(orders)")
+    }
+    if column not in existing_columns:
+        connection.execute(f"ALTER TABLE orders ADD COLUMN {column} {definition}")
 
 
 def init_db(db_path: str) -> None:
@@ -23,10 +33,16 @@ def init_db(db_path: str) -> None:
             )
             """
         )
+        _ensure_column(connection, "target_content", "TEXT NOT NULL DEFAULT ''")
+        _ensure_column(connection, "content_info", "TEXT NOT NULL DEFAULT ''")
+        _ensure_column(connection, "priority_factors", "TEXT NOT NULL DEFAULT ''")
+        _ensure_column(connection, "attachments_json", "TEXT NOT NULL DEFAULT '[]'")
         connection.commit()
 
 
 def create_order(db_path: str, payload: dict) -> int:
+    attachments_json = json.dumps(payload.get("attachments", []), ensure_ascii=False)
+
     with sqlite3.connect(db_path) as connection:
         cursor = connection.execute(
             """
@@ -39,8 +55,12 @@ def create_order(db_path: str, payload: dict) -> int:
                 contact,
                 deadline,
                 details,
+                target_content,
+                content_info,
+                priority_factors,
+                attachments_json,
                 status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 payload["telegram_user_id"],
@@ -50,7 +70,11 @@ def create_order(db_path: str, payload: dict) -> int:
                 payload["game_nickname"],
                 payload["contact"],
                 payload["deadline"],
-                payload["details"],
+                payload.get("details", ""),
+                payload.get("target_content", ""),
+                payload.get("content_info", ""),
+                payload.get("priority_factors", ""),
+                attachments_json,
                 payload.get("status", "new"),
             ),
         )

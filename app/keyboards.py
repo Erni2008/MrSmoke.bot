@@ -22,10 +22,10 @@ def main_menu(webapp_url: str) -> ReplyKeyboardMarkup:
 def service_types() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="Прокачка аккаунта")],
             [KeyboardButton(text="Прохождение квестов")],
-            [KeyboardButton(text="Арена")],
             [KeyboardButton(text="Эвенты")],
+            [KeyboardButton(text="Арена")],
+            [KeyboardButton(text="Прокачка аккаунта")],
             [KeyboardButton(text="Другое")],
         ],
         resize_keyboard=True,
