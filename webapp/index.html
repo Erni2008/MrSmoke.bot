@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>MCOC Orders</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero__copy">
+          <p class="eyebrow">Marvel Contest of Champions</p>
+          <h1>Заявка как мини-приложение</h1>
+          <p class="hero__text">
+            Быстрая форма заказа для буста, прохождения, арены и ивентов. Нормальный интерфейс вместо длинного диалога.
+          </p>
+        </div>
+        <div class="hero__badge">MCOC</div>
+      </section>
+
+      <section class="service-strip">
+        <button class="service-chip is-active" type="button" data-service="Прокачка аккаунта">Прокачка</button>
+        <button class="service-chip" type="button" data-service="Прохождение квестов">Квесты</button>
+        <button class="service-chip" type="button" data-service="Арена">Арена</button>
+        <button class="service-chip" type="button" data-service="Эвенты">Эвенты</button>
+        <button class="service-chip" type="button" data-service="Другое">Другое</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel__head">
+          <h2>Новая заявка</h2>
+          <p>Заполни форму и отправь заказ прямо из Telegram.</p>
+        </div>
+
+        <form id="order-form" class="order-form">
+          <label class="field">
+            <span>Как к вам обращаться</span>
+            <input id="customer_name" name="customer_name" type="text" placeholder="Mr Smoke" required />
+          </label>
+
+          <label class="field">
+            <span>Тип услуги</span>
+            <input id="service_type" name="service_type" type="text" value="Прокачка аккаунта" required />
+          </label>
+
+          <label class="field">
+            <span>Игровой ник</span>
+            <input id="game_nickname" name="game_nickname" type="text" placeholder="SummonerName" required />
+          </label>
+
+          <label class="field">
+            <span>Контакт</span>
+            <input id="contact" name="contact" type="text" placeholder="@username / Discord / WhatsApp" required />
+          </label>
+
+          <label class="field">
+            <span>Срок</span>
+            <input id="deadline" name="deadline" type="text" placeholder="Сегодня / 2 дня / до воскресенья" required />
+          </label>
+
+          <label class="field">
+            <span>Детали заказа</span>
+            <textarea id="details" name="details" rows="5" placeholder="Что именно нужно сделать, какие цели, ограничения и пожелания." required></textarea>
+          </label>
+
+          <div class="summary-card">
+            <div>
+              <p class="summary-card__label">Статус формы</p>
+              <p id="status-text" class="summary-card__value">Форма готова к отправке</p>
+            </div>
+            <div class="summary-card__pulse"></div>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
