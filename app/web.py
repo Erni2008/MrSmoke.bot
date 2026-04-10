@@ -12,6 +12,20 @@ def build_web_app() -> web.Application:
     async def index(_: web.Request) -> web.FileResponse:
         return web.FileResponse(static_dir / "index.html")
 
+    async def health(_: web.Request) -> web.Response:
+        return web.json_response({"status": "ok"})
+
+    async def favicon(_: web.Request) -> web.Response:
+        return web.Response(status=204)
+
+    async def spa_fallback(request: web.Request) -> web.StreamResponse:
+        if request.path.startswith("/assets/"):
+            raise web.HTTPNotFound()
+        return web.FileResponse(static_dir / "index.html")
+
     app.router.add_get("/", index)
+    app.router.add_get("/healthz", health)
+    app.router.add_get("/favicon.ico", favicon)
     app.router.add_static("/assets/", path=static_dir / "assets", name="assets")
+    app.router.add_get("/{tail:.*}", spa_fallback)
     return app

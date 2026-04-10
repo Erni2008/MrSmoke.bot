@@ -45,9 +45,13 @@ def get_settings() -> Settings:
     if not admin_ids:
         raise RuntimeError("ADMIN_IDS is not set. Add at least one Telegram user ID.")
 
-    webapp_url = os.getenv("WEBAPP_URL", "http://127.0.0.1:8080").strip()
-    web_host = os.getenv("WEB_HOST", "127.0.0.1").strip()
-    web_port = int(os.getenv("WEB_PORT", "8080").strip())
+    render_port = os.getenv("PORT", "").strip()
+    default_port = render_port or os.getenv("WEB_PORT", "8080").strip()
+    default_host = "0.0.0.0" if render_port else "127.0.0.1"
+
+    webapp_url = os.getenv("WEBAPP_URL", f"http://127.0.0.1:{default_port}").strip()
+    web_host = os.getenv("WEB_HOST", default_host).strip()
+    web_port = int(default_port)
 
     return Settings(
         bot_token=token,

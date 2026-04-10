@@ -6,57 +6,124 @@
     <title>MCOC Orders</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/assets/styles.css" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
     <main class="app-shell">
       <section class="hero">
-        <div class="hero__copy">
+        <div class="hero__content">
           <p class="eyebrow">Marvel Contest of Champions</p>
-          <h1>Заявка как мини-приложение</h1>
+          <h1>Подача заказа без хаоса в чате</h1>
           <p class="hero__text">
-            Быстрая форма заказа для буста, прохождения, арены и ивентов. Нормальный интерфейс вместо длинного диалога.
+            Выбери тип буста, укажи сроки и детали. Заявка уйдет администратору в аккуратном формате.
           </p>
+
+          <div class="hero__stats">
+            <article class="stat-card">
+              <span class="stat-card__label">Формат</span>
+              <strong class="stat-card__value">Mini App</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-card__label">Ответ</span>
+              <strong class="stat-card__value">Через Telegram</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-card__label">Статус</span>
+              <strong class="stat-card__value">Отслеживается</strong>
+            </article>
+          </div>
         </div>
-        <div class="hero__badge">MCOC</div>
+
+        <aside class="hero__visual">
+          <div class="hero-orb hero-orb--large"></div>
+          <div class="hero-orb hero-orb--small"></div>
+          <div class="hero-ticket">
+            <span class="hero-ticket__label">MCOC ORDER</span>
+            <span class="hero-ticket__value">READY</span>
+          </div>
+        </aside>
       </section>
 
-      <section class="service-strip">
-        <button class="service-chip is-active" type="button" data-service="Прокачка аккаунта">Прокачка</button>
-        <button class="service-chip" type="button" data-service="Прохождение квестов">Квесты</button>
-        <button class="service-chip" type="button" data-service="Арена">Арена</button>
-        <button class="service-chip" type="button" data-service="Эвенты">Эвенты</button>
-        <button class="service-chip" type="button" data-service="Другое">Другое</button>
+      <section class="service-board">
+        <div class="section-head">
+          <div>
+            <p class="section-head__eyebrow">Категории</p>
+            <h2>Что нужно сделать</h2>
+          </div>
+          <p class="section-head__text">Выбери сценарий. Он сразу подставится в форму ниже.</p>
+        </div>
+
+        <div class="service-grid">
+          <button class="service-card is-active" type="button" data-service="Прокачка аккаунта">
+            <span class="service-card__tag">01</span>
+            <strong>Прокачка аккаунта</strong>
+            <span>Рост силы, развитие ростера, точечный буст.</span>
+          </button>
+          <button class="service-card" type="button" data-service="Прохождение квестов">
+            <span class="service-card__tag">02</span>
+            <strong>Прохождение квестов</strong>
+            <span>Сюжет, сайд-квесты, сложные главы и путь с условиями.</span>
+          </button>
+          <button class="service-card" type="button" data-service="Арена">
+            <span class="service-card__tag">03</span>
+            <strong>Арена</strong>
+            <span>Фарм результатов, цели по серии и наградам.</span>
+          </button>
+          <button class="service-card" type="button" data-service="Эвенты">
+            <span class="service-card__tag">04</span>
+            <strong>Эвенты</strong>
+            <span>Ивентовые задачи, лимиты, ротации и приоритеты.</span>
+          </button>
+          <button class="service-card" type="button" data-service="Другое">
+            <span class="service-card__tag">05</span>
+            <strong>Другое</strong>
+            <span>Нестандартная заявка со своими условиями.</span>
+          </button>
+        </div>
       </section>
 
-      <section class="panel">
-        <div class="panel__head">
-          <h2>Новая заявка</h2>
-          <p>Заполни форму и отправь заказ прямо из Telegram.</p>
+      <section class="form-panel">
+        <div class="section-head">
+          <div>
+            <p class="section-head__eyebrow">Заявка</p>
+            <h2>Новая форма заказа</h2>
+          </div>
+          <div class="progress-box">
+            <span>Заполнение</span>
+            <strong id="progress-label">0%</strong>
+          </div>
+        </div>
+
+        <div class="progress-track">
+          <div id="progress-bar" class="progress-track__bar"></div>
         </div>
 
         <form id="order-form" class="order-form">
-          <label class="field">
-            <span>Как к вам обращаться</span>
-            <input id="customer_name" name="customer_name" type="text" placeholder="Mr Smoke" required />
-          </label>
+          <div class="field-grid">
+            <label class="field">
+              <span>Как к вам обращаться</span>
+              <input id="customer_name" name="customer_name" type="text" placeholder="Mr Smoke" required />
+            </label>
 
-          <label class="field">
-            <span>Тип услуги</span>
-            <input id="service_type" name="service_type" type="text" value="Прокачка аккаунта" required />
-          </label>
+            <label class="field">
+              <span>Тип услуги</span>
+              <input id="service_type" name="service_type" type="text" value="Прокачка аккаунта" required />
+            </label>
+          </div>
 
-          <label class="field">
-            <span>Игровой ник</span>
-            <input id="game_nickname" name="game_nickname" type="text" placeholder="SummonerName" required />
-          </label>
+          <div class="field-grid">
+            <label class="field">
+              <span>Игровой ник</span>
+              <input id="game_nickname" name="game_nickname" type="text" placeholder="SummonerName" required />
+            </label>
 
-          <label class="field">
-            <span>Контакт</span>
-            <input id="contact" name="contact" type="text" placeholder="@username / Discord / WhatsApp" required />
-          </label>
+            <label class="field">
+              <span>Контакт</span>
+              <input id="contact" name="contact" type="text" placeholder="@username / Discord / WhatsApp" required />
+            </label>
+          </div>
 
           <label class="field">
             <span>Срок</span>
@@ -65,17 +132,28 @@
 
           <label class="field">
             <span>Детали заказа</span>
-            <textarea id="details" name="details" rows="5" placeholder="Что именно нужно сделать, какие цели, ограничения и пожелания." required></textarea>
+            <textarea id="details" name="details" rows="6" placeholder="Напиши, что нужно сделать, какой результат нужен, какие ограничения и пожелания." required></textarea>
           </label>
+        </form>
 
-          <div class="summary-card">
+        <section class="bottom-grid">
+          <article class="summary-card">
             <div>
               <p class="summary-card__label">Статус формы</p>
-              <p id="status-text" class="summary-card__value">Форма готова к отправке</p>
+              <p id="status-text" class="summary-card__value">Форма готова к заполнению</p>
             </div>
             <div class="summary-card__pulse"></div>
-          </div>
-        </form>
+          </article>
+
+          <article class="tips-card">
+            <p class="tips-card__label">Что ускорит ответ</p>
+            <ul class="tips-list">
+              <li>Укажи конкретную цель</li>
+              <li>Добавь срок без расплывчатости</li>
+              <li>Напиши важные ограничения</li>
+            </ul>
+          </article>
+        </section>
       </section>
     </main>
 

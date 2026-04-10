@@ -53,4 +53,16 @@ The bot runs both Telegram polling and the built-in web server for the mini app.
 
 For the mini app to open inside Telegram on real devices, `WEBAPP_URL` should be a public HTTPS URL.
 For local browser testing, `http://127.0.0.1:8080` is enough.
+
+## Render
+
+This project includes [render.yaml](/Users/erni/Desktop/telegram.bot/render.yaml).
+
+For Render deployment:
+
+- `BOT_TOKEN` = your bot token
+- `ADMIN_IDS` = your numeric Telegram ID
+- `WEBAPP_URL` = your Render HTTPS URL, for example `https://telegram-mcoc-bot.onrender.com`
+
+`PORT` is provided by Render automatically. The app already supports it.
 # MrSmoke.bot
